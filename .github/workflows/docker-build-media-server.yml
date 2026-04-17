@@ -8,11 +8,6 @@ on:
         required: false
         default: "latest"
         type: string
-  push:
-    branches:
-      - main
-    paths:
-      - "apps/media-server/**"
 
 jobs:
   build:
@@ -52,13 +47,13 @@ jobs:
         id: build
         uses: docker/build-push-action@v5
         with:
-          context: ./apps/media-server
-          file: ./apps/media-server/Dockerfile.standalone
+          context: .
+          file: apps/media-server/Dockerfile
           platforms: linux/${{ matrix.platform }}
           push: true
           outputs: type=image,name=ghcr.io/${{ env.REPOSITORY_OWNER }}/cap-media-server,push-by-digest=true
-          cache-from: type=gha,scope=media-server-${{ matrix.platform }}
-          cache-to: type=gha,mode=max,scope=media-server-${{ matrix.platform }}
+          cache-from: type=gha,scope=media-server-buildx-${{ matrix.platform }}
+          cache-to: type=gha,mode=max,scope=media-server-buildx-${{ matrix.platform }}
 
       - name: Export Digest
         run: |
@@ -69,7 +64,7 @@ jobs:
       - name: Upload Digest
         uses: actions/upload-artifact@v4
         with:
-          name: digests-media-server-${{ matrix.platform }}
+          name: media-server-digests-${{ matrix.platform }}
           path: /tmp/digests/*
           if-no-files-found: error
           retention-days: 1
@@ -87,7 +82,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: /tmp/digests
-          pattern: digests-media-server-*
+          pattern: media-server-digests-*
           merge-multiple: true
 
       - name: Set up Docker Buildx
